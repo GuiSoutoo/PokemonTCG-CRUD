@@ -1,0 +1,11 @@
+# Dependências
+node_modules/
+app-pokemon-tcg/node_modules/
+api-pokemon-tcg/node_modules/
+
+# Expo e logs
+.expo/
+
+# Sistema
+.DS_Store
+Thumbs.db
