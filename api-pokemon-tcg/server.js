@@ -27,22 +27,17 @@ app.get('/cartas/:id', (req, res) => {
 
 // Criar uma nova carta
 app.post('/cartas', (req, res) => {
-  const { id, nome, tipo, raridade, hp, precoMercado, dataLancamento, foto, latitude, longitude } = req.body;
+  const { nome, tipo, raridade, hp, precoMercado, dataLancamento, foto, latitude, longitude } = req.body;
 
-  if (!id) return res.status(400).json({ message: "O ID é obrigatório" });
-
-  const sql = `INSERT INTO cartas (id, nome, tipo, raridade, hp, precoMercado, dataLancamento, foto, latitude, longitude)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-  const params = [id, nome, tipo, raridade, Number(hp), Number(precoMercado), dataLancamento, foto, latitude, longitude];
+  const sql = `INSERT INTO cartas (nome, tipo, raridade, hp, precoMercado, dataLancamento, foto, latitude, longitude)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  const params = [nome, tipo, raridade, Number(hp), Number(precoMercado), dataLancamento, foto, latitude, longitude];
 
   db.run(sql, params, function(err) {
     if (err) {
-      if (err.message.includes('UNIQUE constraint failed')) {
-        return res.status(400).json({ message: "Erro: Já existe uma carta com este ID!" });
-      }
       return res.status(500).json({ error: err.message });
     }
-    res.status(201).json({ id, ...req.body });
+    res.status(201).json({ id: this.lastID, ...req.body });
   });
 });
 

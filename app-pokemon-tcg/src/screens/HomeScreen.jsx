@@ -52,7 +52,9 @@ export default function HomeScreen({ onNavigateToForm }) {
               )}
 
               <View style={styles.cardContent}>
-                <Text style={styles.cardName}>{item.nome}</Text>
+                <Text style={styles.cardName}>
+                  {item.nome} <Text style={styles.cardId}>#{item.id}</Text>
+                </Text>
                 <Text>{item.tipo} - HP: {item.hp}</Text>
                 <Text style={styles.rarity}>{item.raridade}</Text>
                 <Text style={styles.price}>R$ {item.precoMercado}</Text>
@@ -97,6 +99,7 @@ const styles = StyleSheet.create({
   imagePlaceholder: { backgroundColor: '#ddd' },
   cardContent: { flex: 1 },
   cardName: { fontSize: 18, fontWeight: 'bold', color: '#2c3e50' },
+  cardId: { fontSize: 14, color: '#95a5a6', fontWeight: 'normal' },
   rarity: { fontSize: 12, color: '#7f8c8d', fontStyle: 'italic' },
   price: { fontSize: 16, fontWeight: 'bold', color: '#27ae60', marginTop: 5 },
   locationTag: { fontSize: 10, color: '#9b59b6', marginTop: 3, fontWeight: 'bold' },
