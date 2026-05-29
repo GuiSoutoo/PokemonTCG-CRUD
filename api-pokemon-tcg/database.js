@@ -6,7 +6,7 @@ const db = new sqlite3.Database(path.join(__dirname, 'database.sqlite'));
 db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS cartas (
-      id TEXT PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       nome TEXT NOT NULL,
       tipo TEXT NOT NULL,
       raridade TEXT NOT NULL,

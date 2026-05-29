@@ -43,7 +43,7 @@ export default function FormScreen({ cartaParaEditar, onBack }) {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [3, 4],
-      quality: 0.5,
+      quality: 0.3, // Reduzido de 0.5 para 0.3
       base64: true,
     });
 
@@ -62,7 +62,7 @@ export default function FormScreen({ cartaParaEditar, onBack }) {
     let result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
       aspect: [3, 4],
-      quality: 0.5,
+      quality: 0.3, // Reduzido de 0.5 para 0.3
       base64: true,
     });
 
@@ -87,13 +87,12 @@ export default function FormScreen({ cartaParaEditar, onBack }) {
   };
 
   const handleSave = async () => {
-    if (!id || !nome || !tipo || !hp) {
+    if (!nome || !tipo || !hp) {
       Alert.alert('Erro', 'Por favor, preencha os campos obrigatórios.');
       return;
     }
 
     const dadosCarta = {
-      id,
       nome,
       tipo,
       raridade,
@@ -146,14 +145,16 @@ export default function FormScreen({ cartaParaEditar, onBack }) {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.label}>ID da Carta (Único)</Text>
-      <TextInput
-        style={[styles.input, cartaParaEditar && styles.disabledInput]}
-        value={id}
-        onChangeText={setId}
-        placeholder="Ex: PKM-001"
-        editable={!loading && !cartaParaEditar}
-      />
+      {cartaParaEditar && (
+        <>
+          <Text style={styles.label}>ID da Carta</Text>
+          <TextInput
+            style={[styles.input, styles.disabledInput]}
+            value={String(id)}
+            editable={false}
+          />
+        </>
+      )}
 
       <Text style={styles.label}>Nome</Text>
       <TextInput style={styles.input} value={nome} onChangeText={setNome} placeholder="Pikachu" editable={!loading} />
