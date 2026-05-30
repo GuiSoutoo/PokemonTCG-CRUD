@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, ScrollView, Alert, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
 import api from '../services/api';
 
 export default function FormScreen({ cartaParaEditar, onBack }) {
@@ -10,7 +12,9 @@ export default function FormScreen({ cartaParaEditar, onBack }) {
   const [hp, setHp] = useState('');
   const [precoMercado, setPrecoMercado] = useState('');
   const [dataLancamento, setDataLancamento] = useState(new Date().toISOString().split('T')[0]);
-  const [imagemUrl, setImagemUrl] = useState('');
+  const [foto, setFoto] = useState('');
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -22,13 +26,69 @@ export default function FormScreen({ cartaParaEditar, onBack }) {
       setHp(String(cartaParaEditar.hp));
       setPrecoMercado(String(cartaParaEditar.precoMercado));
       setDataLancamento(cartaParaEditar.dataLancamento);
-      setImagemUrl(cartaParaEditar.imagemUrl || '');
+      setFoto(cartaParaEditar.foto || '');
+      setLatitude(cartaParaEditar.latitude);
+      setLongitude(cartaParaEditar.longitude);
     }
   }, [cartaParaEditar]);
 
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permissão negada', 'Precisamos de acesso à galeria.');
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [3, 4],
+      quality: 0.5,
+      base64: true,
+    });
+
+    if (!result.canceled) {
+      setFoto(`data:image/jpeg;base64,${result.assets[0].base64}`);
+    }
+  };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permissão negada', 'Precisamos de acesso à câmera.');
+      return;
+    }
+
+    let result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [3, 4],
+      quality: 0.5,
+      base64: true,
+    });
+
+    if (!result.canceled) {
+      setFoto(`data:image/jpeg;base64,${result.assets[0].base64}`);
+    }
+  };
+
+  const getLocation = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permissão negada', 'Precisamos de acesso à localização.');
+      return;
+    }
+
+    setLoading(true);
+    let location = await Location.getCurrentPositionAsync({});
+    setLatitude(location.coords.latitude);
+    setLongitude(location.coords.longitude);
+    setLoading(false);
+    Alert.alert('Sucesso', 'Coordenadas obtidas!');
+  };
+
   const handleSave = async () => {
-    if (!id || !nome || !tipo || !hp || !imagemUrl) {
-      Alert.alert('Erro', 'Por favor, preencha todos os campos, incluindo o ID.');
+    if (!id || !nome || !tipo || !hp) {
+      Alert.alert('Erro', 'Por favor, preencha os campos obrigatórios.');
       return;
     }
 
@@ -40,7 +100,9 @@ export default function FormScreen({ cartaParaEditar, onBack }) {
       hp: Number(hp),
       precoMercado: Number(precoMercado),
       dataLancamento,
-      imagemUrl
+      foto,
+      latitude,
+      longitude
     };
 
     setLoading(true);
@@ -67,13 +129,22 @@ export default function FormScreen({ cartaParaEditar, onBack }) {
     <ScrollView style={styles.container}>
       <Text style={styles.title}>{cartaParaEditar ? 'Editar Carta' : 'Nova Carta'}</Text>
 
-      {imagemUrl ? (
-        <Image source={{ uri: imagemUrl }} style={styles.previewImage} />
+      {foto ? (
+        <Image source={{ uri: foto }} style={styles.previewImage} />
       ) : (
         <View style={[styles.previewImage, styles.imagePlaceholder]}>
-          <Text>Prévia da Imagem</Text>
+          <Text>Sem Foto</Text>
         </View>
       )}
+
+      <View style={styles.row}>
+        <TouchableOpacity style={styles.imageBtn} onPress={pickImage}>
+          <Text style={styles.btnText}>GALERIA</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.imageBtn} onPress={takePhoto}>
+          <Text style={styles.btnText}>CÂMERA</Text>
+        </TouchableOpacity>
+      </View>
 
       <Text style={styles.label}>ID da Carta (Único)</Text>
       <TextInput
@@ -81,11 +152,8 @@ export default function FormScreen({ cartaParaEditar, onBack }) {
         value={id}
         onChangeText={setId}
         placeholder="Ex: PKM-001"
-        editable={!loading && !cartaParaEditar} // Não permite mudar o ID na edição
+        editable={!loading && !cartaParaEditar}
       />
-
-      <Text style={styles.label}>URL da Imagem</Text>
-      <TextInput style={styles.input} value={imagemUrl} onChangeText={setImagemUrl} placeholder="Link da imagem" editable={!loading} />
 
       <Text style={styles.label}>Nome</Text>
       <TextInput style={styles.input} value={nome} onChangeText={setNome} placeholder="Pikachu" editable={!loading} />
@@ -107,6 +175,16 @@ export default function FormScreen({ cartaParaEditar, onBack }) {
       <Text style={styles.label}>Preço (R$)</Text>
       <TextInput style={styles.input} value={precoMercado} onChangeText={setPrecoMercado} keyboardType="numeric" placeholder="50.00" editable={!loading} />
 
+      <Text style={styles.label}>Localização (GPS)</Text>
+      <View style={styles.locationContainer}>
+        <Text style={styles.locationText}>
+          {latitude ? `Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}` : 'Não definida'}
+        </Text>
+        <TouchableOpacity style={styles.locationBtn} onPress={getLocation}>
+          <Text style={styles.btnText}>OBTER GPS</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[styles.saveBtn, loading && { backgroundColor: '#ccc' }]}
@@ -127,14 +205,18 @@ export default function FormScreen({ cartaParaEditar, onBack }) {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#fff' },
   title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center', marginTop: 40 },
-  previewImage: { width: 120, height: 170, alignSelf: 'center', borderRadius: 10, marginBottom: 20 },
+  previewImage: { width: 120, height: 170, alignSelf: 'center', borderRadius: 10, marginBottom: 10 },
   imagePlaceholder: { backgroundColor: '#eee', justifyContent: 'center', alignItems: 'center', borderStyle: 'dashed', borderWidth: 1, borderColor: '#ccc' },
   label: { fontSize: 14, fontWeight: 'bold', marginTop: 10 },
   input: { borderBottomWidth: 1, borderColor: '#ccc', padding: 8, marginBottom: 10 },
   disabledInput: { backgroundColor: '#f9f9f9', color: '#999' },
-  row: { flexDirection: 'row' },
+  row: { flexDirection: 'row', gap: 10, justifyContent: 'center', marginBottom: 10 },
+  imageBtn: { backgroundColor: '#3498db', padding: 10, borderRadius: 5, flex: 1, alignItems: 'center' },
+  locationContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#f8f9fa', padding: 10, borderRadius: 5, marginTop: 5 },
+  locationText: { fontSize: 12, color: '#666' },
+  locationBtn: { backgroundColor: '#9b59b6', padding: 8, borderRadius: 5 },
   buttonContainer: { marginTop: 30, gap: 10, marginBottom: 50 },
   saveBtn: { backgroundColor: '#27ae60', padding: 15, borderRadius: 8, alignItems: 'center', minHeight: 50, justifyContent: 'center' },
   cancelBtn: { backgroundColor: '#95a5a6', padding: 15, borderRadius: 8, alignItems: 'center' },
-  btnText: { color: '#fff', fontWeight: 'bold' }
+  btnText: { color: '#fff', fontWeight: 'bold', fontSize: 12 }
 });

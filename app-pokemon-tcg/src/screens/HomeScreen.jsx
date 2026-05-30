@@ -45,8 +45,8 @@ export default function HomeScreen({ onNavigateToForm }) {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <View style={styles.card}>
-              {item.imagemUrl ? (
-                <Image source={{ uri: item.imagemUrl }} style={styles.image} />
+              {item.foto ? (
+                <Image source={{ uri: item.foto }} style={styles.image} />
               ) : (
                 <View style={[styles.image, styles.imagePlaceholder]} />
               )}
@@ -56,6 +56,9 @@ export default function HomeScreen({ onNavigateToForm }) {
                 <Text>{item.tipo} - HP: {item.hp}</Text>
                 <Text style={styles.rarity}>{item.raridade}</Text>
                 <Text style={styles.price}>R$ {item.precoMercado}</Text>
+                {item.latitude && (
+                  <Text style={styles.locationTag}>📍 Localizado</Text>
+                )}
               </View>
 
               <View style={styles.actions}>
@@ -96,6 +99,7 @@ const styles = StyleSheet.create({
   cardName: { fontSize: 18, fontWeight: 'bold', color: '#2c3e50' },
   rarity: { fontSize: 12, color: '#7f8c8d', fontStyle: 'italic' },
   price: { fontSize: 16, fontWeight: 'bold', color: '#27ae60', marginTop: 5 },
+  locationTag: { fontSize: 10, color: '#9b59b6', marginTop: 3, fontWeight: 'bold' },
   actions: { paddingLeft: 10, gap: 20 },
   editBtn: { fontSize: 20 },
   deleteBtn: { fontSize: 20 },
